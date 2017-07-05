@@ -1,0 +1,1 @@
+Hero Slider Wordpress Plugin
