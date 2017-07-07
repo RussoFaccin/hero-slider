@@ -54,8 +54,8 @@ function render_movie_slider_menu_page()
     <h1>Movie Slider</h1>
 
     <?php
-    settings_fields('MovieSlider_Options');
-    do_settings_sections('MovieSlider_Options');
+    settings_fields('movie_slider');
+    do_settings_sections('movie_slider');
     submit_button(); ?>
 
   </form>
@@ -65,113 +65,115 @@ function render_movie_slider_menu_page()
 add_action('admin_init', 'movie_slider_settings_init');
 
 function movie_slider_settings_init(){
-  register_setting('MovieSlider_Options', 'movie_slider_settings');
-
-  // DEFAULT SECTION
-  // ==================================================
-  add_settings_section(
-    'movie_slider_default_section',
-    __('Default Options', 'wordpress'),
-    'movie_slider_settings_section_callback',
-    'MovieSlider_Options'
+  register_setting(
+    'movie_slider', // option group - used to render the options page
+    'movie_slider_settings', // option name - used with functions like get_option()
+    'handle_file_upload' // function callback
   );
-
-  // Checkbox field
-  add_settings_field(
-    'movie_slider_checkbox',
-    __('Use Movie Slider?'),
-    'movie_slider_checkbox_render',
-    'MovieSlider_Options',
-    'movie_slider_default_section'
-  );
-
-  // Movie URL field
-  add_settings_field(
-    'movie_slider_movieurl',
-    __('Movie URL:'),
-    'movie_slider_movieurl_display',
-    'MovieSlider_Options',
-    'movie_slider_default_section'
-  );
-
-  // CAPTION SECTION
-  // ==================================================
 
   add_settings_section(
-    'movie_slider_caption_section',
-    __('Caption Options', 'wordpress'),
-    'movie_slider_settings_section_callback',
-    'MovieSlider_Options'
+    'movie_slider_section', //id - used to add fields to this section
+    'Options', // Title
+    'movie_slider_settings_section_render', // Function callback
+    'movie_slider' // id - menu slug
+  );
+
+  // CHECKBOX field
+  add_settings_field(
+  'movie_slider_check_fld', // id
+  'Usar movie Slider?', // Title
+  'movie_slider_check_render', // Function callback
+  'movie_slider', // menu slug
+  'movie_slider_section' // Section id
   );
 
   // Caption field
-  add_settings_field(
-    'movie_slider_text_field_1',
-    __('Caption', 'wordpress'),
-    'movie_slider_text_field_1_render',
-    'MovieSlider_Options',
-    'movie_slider_caption_section'
-  );
+add_settings_field(
+  'movie_slider_caption_fld', // id
+  'Caption', // Title
+  'movie_slider_caption_fld_render', // Function callback
+  'movie_slider', // menu slug
+  'movie_slider_section' // Section id
+);
 
-  // Dynamic field
-  for ($n_fields=0; $n_fields < 10; $n_fields++) {
-    add_settings_field(
-      'movie_slider_text_field_'.$n_fields,
-      __('Caption', 'wordpress'),
-      'movie_slider_text_field_render',
-      'MovieSlider_Options',
-      'movie_slider_caption_section',
-      array('number' => $n_fields)
-    );
+// URL field
+add_settings_field(
+'movie_slider_url_fld', // id
+'Movie URL', // Title
+'movie_slider_url_fld_render', // Function callback
+'movie_slider', // menu slug
+'movie_slider_section' // Section id
+);
+
+// MEDIA UPLOAD field
+add_settings_field(
+'movie_slider_media_fld', // id
+'Media', // Title
+'movie_slider_media_fld_render', // Function callback
+'movie_slider', // menu slug
+'movie_slider_section' // Section id
+);
+
+}
+
+function handle_file_upload($options)
+{
+  $uploadedfile = $_FILES['movie_slider_media_fld'];
+  $upload_overrides = array( 'test_form' => false );
+
+  if ($uploadedfile['tmp_name'] == "") {
+    return $options;
+  }else{
+    $result = wp_handle_upload($uploadedfile, $upload_overrides);
+    $url = $result['url'];
+    $options['movie_slider_media_fld'] = $url;
+    return $options;
   }
 }
 
-// Checkbox field
-function movie_slider_checkbox_render()
+
+function movie_slider_settings_section_render($args)
 {
-    $options = get_option('movie_slider_settings'); ?>
-<div id="checkbox-wrapper">
-  <span>No</span>
-  <input type='checkbox' id='movie_slider_settings[movie_slider_checkbox_field_0]' class='switch-toggle' name='movie_slider_settings[movie_slider_checkbox_field_0]' <?php checked($options['movie_slider_checkbox_field_0'], 1); ?> value='1'>
-  <label for="movie_slider_settings[movie_slider_checkbox_field_0]"></label>
-  <span>Yes</span>
-</div>
-<?php
+    echo "AAAAA";
 }
 
-// Movie URL field
-function movie_slider_movieurl_display()
-{
-    $options = get_option('movie_slider_settings'); ?>
-  <input type='file' name='movie_slider_settings[movie_slider_movieurl]' value='<?php echo $options['movie_slider_movieurl']; ?>'>
+// CHECKBOX FIELD - RENDER
+function movie_slider_check_render(){
+  $setting = get_option( 'movie_slider_settings' );
+  ?>
+    <div id="checkbox-wrapper">
+      <span>No</span>
+      <input type='checkbox' id='movie_slider_check_fld' class='switch-toggle' name='movie_slider_settings[movie_slider_check_fld]' <?php checked($setting['movie_slider_check_fld'], 1); ?> value='1'>
+      <label for="movie_slider_check_fld"></label>
+      <span>Yes</span>
+    </div>
   <?php
 }
 
-// Caption field
-function movie_slider_text_field_1_render()
-{
-    $options = get_option('movie_slider_settings'); ?>
-<input type='text' name='movie_slider_settings[movie_slider_text_field_1]' value='<?php echo $options['movie_slider_text_field_1']; ?>'>
-<hr />
-<?php
+// CAPTION FIELD - RENDER
+function movie_slider_caption_fld_render(){
+  $setting = get_option( 'movie_slider_settings' );
+  ?>
+    <input type='text' id="movie_slider_caption_fld" name="movie_slider_settings[movie_slider_caption_fld]" value="<?php echo $setting['movie_slider_caption_fld']; ?>" />
+  <?php
 }
 
-// Default field
-function movie_slider_text_field_render($args)
-{
-    $options = get_option('movie_slider_settings'); ?>
-    <p>
-      args: <?php echo $args['number'] ?>
-    </p>
-<input type='text' name='movie_slider_settings[movie_slider_text_field_<?php echo $args['number'] ?>]' value='<?php echo $options['movie_slider_text_field_<?php $args ?>']; ?>'>
-<hr />
-<?php
+// URL FIELD - RENDER
+function movie_slider_url_fld_render(){
+  $setting = get_option( 'movie_slider_settings' );
+  ?>
+    <input type='text' id="movie_slider_url_fld" name="movie_slider_settings[movie_slider_url_fld]" value="<?php echo $setting['movie_slider_url_fld']; ?>" />
+  <?php
 }
 
-
-function movie_slider_settings_section_callback()
-{
-    echo __('This section description', 'wordpress');
+// MEDIA UPLOAD FIELD - RENDER
+function movie_slider_media_fld_render(){
+  $setting = get_option( 'movie_slider_settings' );
+  ?>
+    <img src="<?php echo $setting['movie_slider_media_fld']; ?>" width="200px" height="200px">
+    <input type='file' id="movie_slider_media_fld" name="movie_slider_media_fld" />
+    <input type="text" name="movie_slider_settings[movie_slider_media_fld]" value="<?php echo $setting['movie_slider_media_fld']; ?>"  />
+  <?php
 }
 
 /* =====
@@ -254,7 +256,7 @@ function animacao_save($post_id)
 
 // load css into the admin pages
 function mytheme_enqueue_options_style() {
-  wp_enqueue_style( 'mytheme-options-style', plugins_url() . '/hero-slider/styles/admin-slider.css' ); 
+  wp_enqueue_style( 'mytheme-options-style', plugins_url() . '/hero-slider/styles/admin-slider.css' );
 }
 
 add_action( 'admin_enqueue_scripts', 'mytheme_enqueue_options_style' );
