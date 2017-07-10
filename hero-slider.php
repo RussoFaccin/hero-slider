@@ -5,6 +5,12 @@ Description: Vídeo and Image Slider
 */
 
 /* ==================================================
+    UTILS FUNTIONS
+================================================== */
+
+require_once("functions.php");
+
+/* ==================================================
     IMAGE SLIDER - POST TYPE
 ================================================== */
 
@@ -122,20 +128,25 @@ function handle_file_upload($options)
   $upload_overrides = array( 'test_form' => false );
 
   if ($uploadedfile['tmp_name'] == "") {
+    $old_options = get_option('movie_slider_settings')['movie_slider_media_fld'];
+    $options['movie_slider_media_fld'] = $old_options;
     return $options;
   }else{
     $result = wp_handle_upload($uploadedfile, $upload_overrides);
-    $url = $result['url'];
-    $options['movie_slider_media_fld'] = $url;
+    $media_url = $result['url'];
+    $media_type = $result['type'];
+    $media = array(
+      'url' => $media_url,
+      'type' => $media_type
+    );
+    $options['movie_slider_media_fld'] = $media;
     return $options;
   }
 }
 
 
 function movie_slider_settings_section_render($args)
-{
-    echo "AAAAA";
-}
+{}
 
 // CHECKBOX FIELD - RENDER
 function movie_slider_check_render(){
@@ -169,10 +180,25 @@ function movie_slider_url_fld_render(){
 // MEDIA UPLOAD FIELD - RENDER
 function movie_slider_media_fld_render(){
   $setting = get_option( 'movie_slider_settings' );
+  $media_type = $setting['movie_slider_media_fld']['type'];
+  $type = returnMediaType($media_type);
+  if ($type == 'IMAGE') {
+    ?>
+      <img src="<?php echo $setting['movie_slider_media_fld']['url']; ?>" width="200px" height="200px">
+    <?php
+  }else{
+    ?>
+    <video width="200" height="200" autoplay loop>
+      <source src="<?php echo $setting['movie_slider_media_fld']['url']; ?>" type="<?php echo $setting['movie_slider_media_fld']['type']; ?>">
+      <source src="mov_bbb.ogg" type="video/ogg">
+      Your browser does not support HTML5 video.
+    </video>
+    <?php
+  }
   ?>
-    <img src="<?php echo $setting['movie_slider_media_fld']; ?>" width="200px" height="200px">
     <input type='file' id="movie_slider_media_fld" name="movie_slider_media_fld" />
-    <input type="text" name="movie_slider_settings[movie_slider_media_fld]" value="<?php echo $setting['movie_slider_media_fld']; ?>"  />
+    <p>MAX FILE SIZE: 32MB</p>
+    <input type="text" name="movie_slider_settings[movie_slider_media_fld]" value="<?php echo $setting['movie_slider_media_fld']['url']; ?>"  />
   <?php
 }
 
